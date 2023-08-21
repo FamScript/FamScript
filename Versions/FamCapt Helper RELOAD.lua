@@ -1,6 +1,6 @@
 script_name('FamCapt Helper RELOAD') -- Название скрипта
 script_author('RDewize') -- Автор скрипта
-script_version('3.0.0') -- Версия скрипта 
+script_version('4.0.0') -- Версия скрипта 
 script_description('21.06.2023') -- Дата создания данной версии скрипта
 
 --==================================== [ Информация для пользователей скрипта ] ====================================--
@@ -24,7 +24,8 @@ script_description('21.06.2023') -- Дата создания данной версии скрипта
 --===== [ Подключаем библиотеки ] =====--
 local imgui = require 'mimgui' -- Графический модуль mimgui
 local fa = require('fAwesome6') -- Дополнение к графическому модулю с его помощью можно добавлять разного рода иконок.
-local dlstatus = require('moonloader').download_status -- модуль предостовляет функционал для отслеживания статуса загруски файлов.
+local dlstatus = require('moonloader').download_status -- Модуль предостовляет функционал для отслеживания статуса загруски файлов.
+local requests = require('requests') -- Это небольшая библиотека, которая полностью и верно реализует потоковую передачу XHR для браузеры, поддерживающие эти методы.
 ------------------------------
 
 
@@ -48,8 +49,9 @@ pink = '{ED3CCA}' -- Розовый
 
 --===== [Автообновеление] --=====
 function update()
-    local raw = 'https://raw.githubusercontent.com/RikoDewize/FamScript/main/checkupd.JSON'
-    local requests = require('requests')
+    local raw = 'https://raw.githubusercontent.com/RikoDewize/FamScript/main/checkupd.JSON' -- Ссылка на JSON файл с инфой о актуальной версии и ссылке на скачивание актуальной версии
+    local dlstatus = require('moonloader').download_status -- Модуль предостовляет функционал для отслеживания статуса загруски файлов.
+	local requests = require('requests') -- Это небольшая библиотека, которая полностью и верно реализует потоковую передачу XHR для браузеры, поддерживающие эти методы.
     local f = {}
     function f:getLastVersion()
         local response = requests.get(raw)
@@ -90,7 +92,14 @@ function main()
 	while not isSampAvailable() do wait(100) end -- -- Ждём пока функция isSampAvailable() вернет true, после ставим задержку, что-бы игра не зависла.
 	
 	--Проверка на новую версию--
-	
+
+	local lastver = update():getLastVersion()
+    sampAddChatMessage('Скрипт загружен, версия: '..lastver, -1)
+
+	if thisScript().version ~= lastver then
+
+        sampAddChatMessage(tag..'Вышло обновление скрипта ('..thisScript().version..' -> '..lastver..'), введите /scriptupd для обновления!', -1)
+    end
     --
 	-----
 
@@ -205,7 +214,13 @@ imgui.OnFrame(function() return window_main[0] end,
 
 			--Кнопка "Загрузки обновления"--
 			if imgui.InvisButton(fa('DOWNLOAD'), imgui.ImVec2(30, 30)) then -- Создаем проверку на нажатие кнопки
-				sampAddChatMessage('a', -1)
+				if thisScript().version ~= lastver then
+			        	
+			        	window_main[0] = false 
+			            update():download()
+			    else
+			    	sampAddChatMessage('Новых версий не обноружено!')    
+			    end
 			end
 			---
 
